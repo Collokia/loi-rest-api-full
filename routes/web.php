@@ -18,3 +18,7 @@ $router->get('/', function () use ($router) {
 $router->get('/key', function () {
     return str_random(32);
 });
+
+$router->get('/categories', ['uses' => 'CategoriesController@index']);
+
+

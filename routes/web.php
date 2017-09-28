@@ -19,6 +19,9 @@ $router->get('/key', function () {
     return str_random(32);
 });
 
-$router->get('/categories', ['uses' => 'CategoriesController@index']);
-
-
+$router->get('/categories', 'CategoriesController@index');
+$router->get('/auth/first-user-token', 'AuthController@getFirstUserToken');
+$router->get('/auth/default-token', 'AuthController@getByDefaultToken');
+$router->post('/auth/login', 'AuthController@loginWithAuth');
+$router->post('/auth/jwt-login', 'AuthController@loginWithJwt');
+$router->post('/authenticate', 'AuthController@authenticate');

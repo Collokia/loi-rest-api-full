@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\User;
@@ -27,7 +28,7 @@ class AuthController extends Controller
 
         try {
             // attempt to verify the credentials and create a token for the user
-            if (! $token = $this->jwt->attempt($credentials)) {
+            if (!$token = $this->jwt->attempt($credentials)) {
                 return response()->json(['error' => 'invalid_credentials'], 401);
             }
         } catch (JWTException $e) {
@@ -41,23 +42,27 @@ class AuthController extends Controller
 
     public function loginWithJwt(Request $request)
     {
-//        $pass = app('hash')->make('maikelpg8501*');
-//        dd($pass);
-
-//        $pasB = password_hash('d01a0e1cb136e7f69c148690f88ffdff', PASSWORD_BCRYPT);
-//        dd($pasB);
-
         $this->validate($request, [
-            'usr_mail'    => 'required|email|max:255',
-            'password' => 'required',
+            'usr_mail' => 'required|email|max:255',
+            'usr_pass' => 'required',
         ]);
 
         try {
-//            $password = md5($request->input('password'));
-//            $email = $request->input('usr_mail');
-            if (! $token = $this->jwt->attempt($request->only('usr_mail', 'password'))) {
+            $password = $request->input('usr_pass');
+            $email = $request->input('usr_mail');
+            $password_md5 = md5($password);
+            $credentials = ['usr_mail' => $email, 'password' => $password];
+
+            $user = User::where('usr_mail', '=', $email)
+                ->where('usr_pass', '=', $password_md5)
+                ->first();
+
+            if (!$user) {
                 return response()->json(['user_not_found'], 404);
+            } else {
+                $token = $user->password ? $this->jwt->attempt($credentials) : $this->jwt->fromUser($user);
             }
+
         } catch (TokenExpiredException $e) {
             return response()->json(['token_expired'], $e->getStatusCode());
         } catch (TokenInvalidException $e) {
@@ -69,23 +74,26 @@ class AuthController extends Controller
         return response()->json(compact('token'));
     }
 
-    public function loginWithAuth(Request $request){
+    public function loginWithAuth(Request $request)
+    {
         $token = app('auth')->attempt($request->only('usr_mail', 'password'));
 
         return response()->json(compact('token'));
     }
 
-    public function getFirstUserToken(Request $request){
+    public function getFirstUserToken(Request $request)
+    {
         $user = User::first();
         $token = $this->jwt->fromUser($user);
         return response()->json(['token' => $token], 200);
     }
 
-    function getByDefaultToken(){
-        try{
+    function getByDefaultToken()
+    {
+        try {
             $token = $this->jwt->attempt(['usr_mail' => 'nicovega@adinet.com.uy', 'password' => 'maikelpg8501*']);
             return response()->json(['token' => $token], 200);
-        } catch (JWTException $e){
+        } catch (JWTException $e) {
             return response()->json(['error' => 'could_not_create_token'], 500);
         }
 

@@ -2,7 +2,10 @@
 
 namespace App\Exceptions;
 
+use App\Traits\RestExceptionHandlerTrait;
+use App\Traits\RestTrait;
 use Exception;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -11,6 +14,10 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
 {
+
+    use RestTrait;
+    use RestExceptionHandlerTrait;
+
     /**
      * A list of the exception types that should not be reported.
      *
@@ -45,6 +52,26 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $e)
     {
-        return parent::render($request, $e);
+        if(!$this->isApiCall($request)) {
+            $retval = parent::render($request, $e);
+        } else {
+            $retval = $this->getJsonResponseForException($request, $e);
+        }
+
+        return $retval;
+    }
+
+    /**
+     * Error formatter
+     *
+     * @param  string  $message
+     * @param  integer $status_code
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+
+    public function error($message, $status_code = Response::HTTP_UNAUTHORIZED)
+    {
+        return response()->json(['error' => ['message' => $message, 'status_code' => $status_code]]);
     }
 }

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\Handler;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Mockery\Exception;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
@@ -16,86 +19,76 @@ class AuthController extends Controller
      */
     protected $jwt;
 
-    public function __construct(JWTAuth $jwt)
+    public function __construct(JWTAuth $jwt, Handler $handler)
     {
         $this->jwt = $jwt;
+        $this->handler = $handler;
     }
 
-    public function authenticate(Request $request)
-    {
-        // grab credentials from the request
-        $credentials = $request->only('usr_mail', 'password');
 
-        try {
-            // attempt to verify the credentials and create a token for the user
-            if (!$token = $this->jwt->attempt($credentials)) {
-                return response()->json(['error' => 'invalid_credentials'], 401);
+    /**
+     * Handle a login request to the application.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+
+    public function login(Request $request)
+    {
+        if ( $request->isJson() ) {
+            $this->validate($request, [
+                'email' => 'required|email|max:255',
+                'password' => 'required',
+            ]);
+
+            try {
+                $password = $request->input('password');
+                $email = $request->input('email');
+                $password_md5 = md5($password);
+                $credentials = $this->getCredentials($request);
+
+                $user = User::where('usr_mail', '=', $email)
+                    ->where('usr_pass', '=', $password_md5)
+                    ->first();
+
+                if (!$user) {
+                    return $this->handler->render($request, Exception::$e);
+                } else {
+                    $token = $user->password ? $this->jwt->attempt($credentials) : $this->jwt->fromUser($user);
+                }
+
+            } catch (TokenExpiredException $e) {
+
+                return $this->handler->render($request, $e);
+
+            } catch (TokenInvalidException $e) {
+
+                return $this->handler->render($request, $e);
+
+            } catch (JWTException $e) {
+
+                return $this->handler->render($request, $e);
+
             }
-        } catch (JWTException $e) {
-            // something went wrong whilst attempting to encode the token
-            return response()->json(['error' => 'could_not_create_token'], 500);
+
+            return response()->json(compact('token'));
         }
 
-        // all good so return the token
-        return response()->json(compact('token'));
+        return $this->handler->error('Unauthorized', Response::HTTP_UNAUTHORIZED);
+
+
     }
 
-    public function loginWithJwt(Request $request)
+
+    /**
+     * Get the needed authorization credentials from the request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    protected function getCredentials(Request $request)
     {
-        $this->validate($request, [
-            'usr_mail' => 'required|email|max:255',
-            'usr_pass' => 'required',
-        ]);
-
-        try {
-            $password = $request->input('usr_pass');
-            $email = $request->input('usr_mail');
-            $password_md5 = md5($password);
-            $credentials = ['usr_mail' => $email, 'password' => $password];
-
-            $user = User::where('usr_mail', '=', $email)
-                ->where('usr_pass', '=', $password_md5)
-                ->first();
-
-            if (!$user) {
-                return response()->json(['user_not_found'], 404);
-            } else {
-                $token = $user->password ? $this->jwt->attempt($credentials) : $this->jwt->fromUser($user);
-            }
-
-        } catch (TokenExpiredException $e) {
-            return response()->json(['token_expired'], $e->getStatusCode());
-        } catch (TokenInvalidException $e) {
-            return response()->json(['token_invalid'], $e->getStatusCode());
-        } catch (JWTException $e) {
-            return response()->json(['token_absent' => $e->getMessage()], $e->getStatusCode());
-        }
-
-        return response()->json(compact('token'));
+        return ['usr_mail' => $request->input('email'), 'password' => $request->input('password')];
     }
 
-    public function loginWithAuth(Request $request)
-    {
-        $token = app('auth')->attempt($request->only('usr_mail', 'password'));
-
-        return response()->json(compact('token'));
-    }
-
-    public function getFirstUserToken(Request $request)
-    {
-        $user = User::first();
-        $token = $this->jwt->fromUser($user);
-        return response()->json(['token' => $token], 200);
-    }
-
-    function getByDefaultToken()
-    {
-        try {
-            $token = $this->jwt->attempt(['usr_mail' => 'nicovega@adinet.com.uy', 'password' => 'maikelpg8501*']);
-            return response()->json(['token' => $token], 200);
-        } catch (JWTException $e) {
-            return response()->json(['error' => 'could_not_create_token'], 500);
-        }
-
-    }
 }

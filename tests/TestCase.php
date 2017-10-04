@@ -21,12 +21,18 @@ abstract class TestCase extends Laravel\Lumen\Testing\TestCase
         return require __DIR__.'/../bootstrap/app.php';
     }
 
+    /**
+     * Return request headers needed to interact with the API.
+     *
+     * @return Array array of headers.
+     */
     protected function headers($user = null)
     {
-        $headers = ['Accept' => 'application/json'];
+        $headers = ['Content-Type' => 'application/json'];
 
         if (!is_null($user)) {
             $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($user);
+            \Tymon\JWTAuth\Facades\JWTAuth::setToken($token);
             $headers['Authorization'] = 'Bearer '.$token;
         }
 

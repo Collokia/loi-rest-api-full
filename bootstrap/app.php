@@ -75,6 +75,7 @@ $app->singleton(
      'jwt.auth' => Tymon\JWTAuth\Facades\JWTAuth::class,
      'jwt.factory' => Tymon\JWTAuth\Facades\JWTFactory::class,
      'jwt.refresh' => Tymon\JWTAuth\Http\Middleware\RefreshToken::class,
+     'cors' => \Barryvdh\Cors\HandleCors::class,
  ]);
 
 /*
@@ -90,6 +91,7 @@ $app->singleton(
 
  $app->register(App\Providers\AppServiceProvider::class);
  $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
+$app->register(Barryvdh\Cors\ServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);
 

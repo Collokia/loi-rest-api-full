@@ -21,7 +21,7 @@ $router->get('/key', function () {
 
 $router->group(['prefix' => 'api/v1'], function () use ($router) {
     $router->post('/login', 'AuthController@login');
-    $router->group(['middleware' => ['before' => 'jwt.auth', 'after' => 'jwt.refresh']], function () use ($router) {
+    $router->group(['middleware' => 'jwt.auth'], function () use ($router) {
         $router->get('/categories', 'CategoriesController@index');
     });
 });

@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\User;
+use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -34,6 +34,12 @@ class AuthServiceProvider extends ServiceProvider
         $this->app['auth']->viaRequest('api', function ($request) {
             return app('auth')->setRequest($request)->user();
         });
+
+//        $this->app['auth']->viaRequest('api', function ($request) {
+//            if ($request->input('email')) {
+//                return User::where('usr_mail', $request->input('email'))->first();
+//            }
+//        });
 
     }
 }

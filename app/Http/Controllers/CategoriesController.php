@@ -2,21 +2,17 @@
 
 namespace App\Http\Controllers;
 
-
-use App\Exceptions\Handler;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Tymon\JWTAuth\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
 
 class CategoriesController extends Controller
 {
 
-    public function __construct(JWTAuth $jwt, Handler $handler)
+    public function __construct(JWTAuth $jwt)
     {
         $this->jwt = $jwt;
-        $this->handler = $handler;
     }
 
     function index(Request $request)
@@ -26,6 +22,6 @@ class CategoriesController extends Controller
             return response()->json($categories, Response::HTTP_OK);
         }
 
-        return $this->handler->error( 'Unauthorized', Response::HTTP_UNAUTHORIZED);
+        return response()->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
     }
 }

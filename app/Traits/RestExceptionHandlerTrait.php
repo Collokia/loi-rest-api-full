@@ -6,6 +6,8 @@ namespace App\Traits;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 
 trait RestExceptionHandlerTrait
 {
@@ -19,9 +21,13 @@ trait RestExceptionHandlerTrait
      */
     protected function getJsonResponseForException(Request $request, Exception $e)
     {
+
         switch(true) {
             case $this->isModelNotFoundException($e):
                 $retval = $this->modelNotFound();
+                break;
+            case $this->isUnauthorizedHttpException($e):
+                $retval = $this->unauthorizedHttp($e);
                 break;
             default:
                 $retval = $this->badRequest();
@@ -29,6 +35,20 @@ trait RestExceptionHandlerTrait
 
         return $retval;
     }
+
+    /**
+     * Returns json response for generic unauthorized request.
+     *
+     * @param string $message
+     * @param int $statusCode
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function unauthorizedHttp(Exception $e)
+    {
+        return $this->jsonResponse(['error' => $e->getMessage()], $statusCode=401);
+    }
+
+
 
     /**
      * Returns json response for generic bad request.
@@ -68,6 +88,19 @@ trait RestExceptionHandlerTrait
         return response()->json($payload, $statusCode);
     }
 
+
+    /**
+     * Returns json response.
+     *
+     * @param array|null $payload
+     * @param int $statusCode
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function tokenExpired($message='Token expired', $statusCode=401)
+    {
+        return $this->jsonResponse(['error' => $message], $statusCode);
+    }
+
     /**
      * Determines if the given exception is an Eloquent model not found.
      *
@@ -77,6 +110,28 @@ trait RestExceptionHandlerTrait
     protected function isModelNotFoundException(Exception $e)
     {
         return $e instanceof ModelNotFoundException;
+    }
+
+    /**
+     * Determines if the given exception is an Unauthorized Http Exception.
+     *
+     * @param Exception $e
+     * @return bool
+     */
+    protected function isUnauthorizedHttpException(Exception $e)
+    {
+        return $e instanceof UnauthorizedHttpException;
+    }
+
+    /**
+     * Determines if the given exception is an Unauthorized Http Exception.
+     *
+     * @param Exception $e
+     * @return bool
+     */
+    protected function isTokenExpiredException(Exception $e)
+    {
+        return $e instanceof TokenExpiredException;
     }
 
 }

@@ -56,4 +56,5 @@ class AuthControllerTest extends TestCase
 //        $this->assertObjectHasAttribute('token', $content);
 //        $this->assertNotEmpty($content->token);
 //    }
+
 }

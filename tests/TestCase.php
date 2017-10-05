@@ -26,9 +26,9 @@ abstract class TestCase extends Laravel\Lumen\Testing\TestCase
      *
      * @return Array array of headers.
      */
-    protected function headers($user = null)
+    protected function headers( $isJson = false, $user = null)
     {
-        $headers = ['Content-Type' => 'application/json'];
+        $headers = $isJson ? ['Content-Type' => 'application/json'] : [];
 
         if (!is_null($user)) {
             $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($user);

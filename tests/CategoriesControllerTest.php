@@ -7,65 +7,55 @@ use Illuminate\Http\Response as HttpResponse;
 class CategoriesControllerTest extends TestCase
 {
 
-    use DatabaseMigrations;
+    const URI = "/api/v1/categories";
 
     /**
-     * A basic test example.
+     * Tratar de obtener todas las categorías sin pasar los parámetros de cabeceras.
      *
      * @return void
      */
-    public function testGetAllCategoriesUnauthenticated()
+    public function testGetAllCategoriesWithoutHeaders()
     {
-        // Sin auntenticar deberia dar un error 401.
-        $this->call('GET', '/api/v1/categories');
+        // Sin parámetros de cabeceras deberia dar un error 401.
+        $this->get(self::URI);
         $this->assertResponseStatus(401);
     }
 
-//    public function testGetAllCategoriesAuthenticated(){
-//        $credentials = \Tymon\JWTAuth\Facades\JWTAuth::attempt(['usr_mail' => 'nicovega@adinet.com.uy', 'password' => 'maikelpg8501*']);
-//
-//        // as a user, I try to access the admin panels without a JWT token
-//        $response = $this->call(
-//            'GET',
-//            '/api/v1/categories',
-//            [], //parameters
-//            [], //cookies
-//            [], // files
-//            ['HTTP_Authorization' => 'Bearer ' . $credentials], // server
-//            []
-//        );
-//        $this->assertEquals(200, $response->status());
-//
-//    }
+    /**
+     * Tratar de obtener todas las categorías pasando el token y no así el parámetro Content-Type 'application/json'.
+     *
+     * @return void
+     */
+    public function testGetAllCategoriesWithoutJsonParam()
+    {
+        // Sin parámetros de cabeceras deberia dar un error 401.
+        $this->get(self::URI, $this->headers(false, \App\Models\User::first()));
+        $this->assertResponseStatus(401);
+    }
+
 
     /**
-     * User may want to login.
-     * This route should be free for all unauthenticated users.
-     * User should receive an JWT token
+     * Tratar de obtener todas las categorías pasando el parámetro Content-Type 'application/json' y no asi el token.
+     *
+     * @return void
      */
-//    public function testLoginSuccesfull()
-//    {
-//        // as a user, I wrongly type my email and password
-//        $data = ['email' => 'admin@app.com', 'password' => 'secret'];
-//        // and I submit it to the login api
-//        $response = $this->call('POST', 'api/v1/login', $data);
-//        // I should be able to login
-//        $this->assertEquals(HttpResponse::HTTP_ACCEPTED, $response->status());
-//        // assert there is a TOKEN on the response
-//        $content = json_decode($response->getContent());
-//        $this->assertObjectHasAttribute('token', $content);
-//        $this->assertNotEmpty($content->token);
-//    }
+    public function testGetAllCategoriesWithoutAuthorizationParam()
+    {
+        // Sin usuario para generar el token debería dar un error 401.
+        $this->get(self::URI, $this->headers(true, null));
+        $this->assertResponseStatus(401);
+    }
 
-    public function testCategoriesWithToken(){
-        $url = '/api/v1/categories';
 
-         // Test unauthenticated access.
-        $this->get($url, $this->headers())
-            ->assertResponseStatus(401);
+    /**
+     * Obtener todas las categorías con éxito, pasando los parámetros de Content-Type y de Authorization (Token).
+     *
+     * @return void
+     */
+    public function testGetAllCategoriesSuccessfull(){
 
         // Test authenticated access.
-        $this->get($url, $this->headers(\App\Models\User::first()))
+        $this->get( self::URI , $this->headers(true, \App\Models\User::first()))
             ->seeJson()
             ->assertResponseOk();
     }
